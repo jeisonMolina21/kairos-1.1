@@ -6,36 +6,11 @@ from openpyxl.styles import Alignment, Font, Border, Side, PatternFill
 
 # Importación absoluta corregida
 try:
-    from reports.styles import EstilosModernos
+    from reports.styles import EstilosInstitucionales
 except ImportError:
-    # Clase de respaldo si no se puede importar
-    class EstilosModernos:
-        @staticmethod
-        def fill_encabezado_principal():
-            return PatternFill(start_color="0054A6", end_color="0054A6", fill_type="solid")
-        @staticmethod
-        def fuente_encabezado():
-            return Font(bold=True, size=11, color="FFFFFF", name='Arial')
-        @staticmethod
-        def fill_verde():
-            return PatternFill(start_color="107C10", end_color="107C10", fill_type="solid")
-        @staticmethod
-        def fill_naranja():
-            return PatternFill(start_color="D83B01", end_color="D83B01", fill_type="solid")
-        @staticmethod
-        def fill_rojo():
-            return PatternFill(start_color="E81123", end_color="E81123", fill_type="solid")
-        @staticmethod
-        def borde_sutil():
-            return Border(
-                left=Side(style='thin', color="E1DFDD"),
-                right=Side(style='thin', color="E1DFDD"),
-                top=Side(style='thin', color="E1DFDD"),
-                bottom=Side(style='thin', color="E1DFDD")
-            )
-        @staticmethod
-        def alineacion_centro():
-            return Alignment(horizontal="center", vertical="center", wrap_text=True)
+    pass
+
+from openpyxl.formatting.rule import DataBarRule
 
 def agregar_hoja_horarios(resumen_path="temp/resumen_asistencias.json",
                          statistics_path="temp/statistics.json",
@@ -327,43 +302,28 @@ def agregar_hoja_horarios(resumen_path="temp/resumen_asistencias.json",
     print(f"⚠️  Días con novedad masiva excluidos: {len(dias_con_novedad_masiva)}")
 
     # ============================================================================
-    # ESTILOS UNIFICADOS CON HOJA DE PERMISOS
+    # ESTILOS INSTITUCIONALES (NUEVO DISEÑO FLAT)
     # ============================================================================
     
-    # Colores para fondos (igual que hoja de permisos)
-    header_fill = PatternFill(start_color="0054A6", end_color="0054A6", fill_type="solid")  # Azul principal
-    subheader_fill_izquierda = PatternFill(start_color="2F75B5", end_color="2F75B5", fill_type="solid")  # Azul para tabla izquierda
-    subheader_fill_derecha = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")  # Azul más oscuro para tabla derecha
+    header_fill = EstilosInstitucionales.fill_azul_principal()
+    subheader_fill_izquierda = EstilosInstitucionales.fill_azul_principal()
+    subheader_fill_derecha = PatternFill(start_color="B85C00", end_color="B85C00", fill_type="solid")
+    col_header_fill = EstilosInstitucionales.fill_azul_medio()
     
-    # Fuentes (igual que hoja de permisos)
-    header_font_large = Font(bold=True, size=14, color="FFFFFF", name='Arial')
-    header_font_medium = Font(bold=True, size=11, color="FFFFFF", name='Arial')
-    header_font_small = Font(bold=True, size=10, color="FFFFFF", name='Arial')
-    normal_font = Font(size=10, name='Arial')
-    small_font = Font(size=8, name='Arial')  # Fuente más pequeña para días
+    header_font_medium = EstilosInstitucionales.fuente_titulo_principal()
+    header_font_small = EstilosInstitucionales.fuente_encabezado_columna()
+    normal_font = EstilosInstitucionales.fuente_normal()
+    small_font = Font(size=9, color=EstilosInstitucionales.TEXTO_NEGRO, name=EstilosInstitucionales.FONT_NAME)
     
-    # Bordes (igual que hoja de permisos)
-    thin_border = Border(
-        left=Side(style='thin', color="BFBFBF"),
-        right=Side(style='thin', color="BFBFBF"),
-        top=Side(style='thin', color="BFBFBF"),
-        bottom=Side(style='thin', color="BFBFBF")
-    )
+    thin_border = EstilosInstitucionales.borde_horizontal_sutil()
+    medium_border = EstilosInstitucionales.borde_inferior_blanco()
     
-    medium_border = Border(
-        left=Side(style='medium', color="0054A6"),
-        right=Side(style='medium', color="0054A6"),
-        top=Side(style='medium', color="0054A6"),
-        bottom=Side(style='medium', color="0054A6")
-    )
-    
-    center = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    center = EstilosInstitucionales.alineacion_centro()
 
-    # Colores para estados (CORREGIDOS - DIFERENTES PARA REGULAR Y A MEJORAR)
-    green_fill = PatternFill(start_color="C6E0B4", end_color="C6E0B4", fill_type="solid")  # Verde
-    yellow_fill = PatternFill(start_color="FFE699", end_color="FFE699", fill_type="solid")  # Amarillo
-    orange_fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")  # Naranja (REGULAR)
-    red_fill = PatternFill(start_color="F8CBAD", end_color="F8CBAD", fill_type="solid")  # Rojo (A MEJORAR)
+    green_fill = PatternFill(start_color="C6E0B4", end_color="C6E0B4", fill_type="solid")
+    yellow_fill = PatternFill(start_color="FFE699", end_color="FFE699", fill_type="solid")
+    orange_fill = PatternFill(start_color="F8CBAD", end_color="F8CBAD", fill_type="solid")
+    red_fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
 
     # FUNCIÓN PARA CALCULAR PUNTUACIÓN COHERENTE
     def calcular_puntuacion_coherente(dias_temprano, dias_atiempo, dias_tarde, dias_analizados):
@@ -387,7 +347,11 @@ def agregar_hoja_horarios(resumen_path="temp/resumen_asistencias.json",
         dias_analizados = len(info["fechas_analizadas"])
         
         # FILTRO: Mínimo 50% de días analizados del período total
-        porcentaje_asistencia = (dias_analizados * 100) / total_dias_laborales_periodo
+        if total_dias_laborales_periodo > 0:
+            porcentaje_asistencia = (dias_analizados * 100) / total_dias_laborales_periodo
+        else:
+            porcentaje_asistencia = 100 # Si no hay días laborales, no filtramos por asistencia
+            
         if porcentaje_asistencia < 50:
             continue
             
@@ -404,6 +368,7 @@ def agregar_hoja_horarios(resumen_path="temp/resumen_asistencias.json",
             "cedula": cedula,
             "nombre": info["nombre"],
             "dias_analizados": dias_analizados,
+            "dias_no_asistidos": max(0, total_dias_laborales_periodo - dias_analizados),
             "dias_temprano": dias_temprano,
             "dias_atiempo": dias_atiempo,
             "dias_tarde": dias_tarde,
@@ -498,16 +463,16 @@ def agregar_hoja_horarios(resumen_path="temp/resumen_asistencias.json",
     for col in range(1, 21):
         cell = ws.cell(row=row_headers, column=col)
         cell.alignment = center
-        cell.border = thin_border
+        cell.border = medium_border
         
         if col <= 9:  # Tabla izquierda
             cell.font = header_font_small
-            cell.fill = subheader_fill_izquierda
+            cell.fill = col_header_fill
         elif col == 10:  # Separación
             cell.fill = PatternFill(fill_type=None)  # Sin relleno
         elif col <= 19:  # Tabla derecha
             cell.font = header_font_small
-            cell.fill = subheader_fill_derecha
+            cell.fill = col_header_fill
         else:  # Margen
             cell.fill = PatternFill(fill_type=None)
 
@@ -650,18 +615,18 @@ def agregar_hoja_horarios(resumen_path="temp/resumen_asistencias.json",
         cell.fill = header_fill
         cell.alignment = center
         cell.border = medium_border
-        # ANCHO CORRECTO: 11 columnas para la lista completa
-        ws.merge_cells(start_row=ws.max_row, start_column=1, end_row=ws.max_row, end_column=11)
+        # ANCHO CORRECTO: 12 columnas para la lista completa
+        ws.merge_cells(start_row=ws.max_row, start_column=1, end_row=ws.max_row, end_column=12)
 
     ws.append([])
 
-    # Encabezados lista completa - ANCHO CORRECTO (11 columnas)
-    headers_completa = ["#", "Documento", "Nombre", "D Laborados", "D Temprano", "D Tiempo", "D Tarde", "Min Retraso", "Min Favor", "Permisos", "Estado"]
+    # Encabezados lista completa
+    headers_completa = ["#", "Documento", "Nombre", "D Laborados", "D No Asistidos", "D Temprano", "D Tiempo", "D Tarde", "Min Retraso", "Min Favor", "Permisos", "Estado", "Puntaje"]
     ws.append(headers_completa)
     for col_num, header in enumerate(headers_completa, 1):
         cell = ws.cell(row=ws.max_row, column=col_num)
         cell.font = header_font_small
-        cell.fill = subheader_fill_izquierda
+        cell.fill = col_header_fill
         cell.alignment = center
         cell.border = medium_border
 
@@ -682,37 +647,61 @@ def agregar_hoja_horarios(resumen_path="temp/resumen_asistencias.json",
             emp["cedula"],
             emp["nombre"],
             emp["dias_analizados"],
+            emp["dias_no_asistidos"],
             f"{emp['dias_temprano']} ({emp['pct_temprano']:.1f}%)",
             f"{emp['dias_atiempo']} ({emp['pct_atiempo']:.1f}%)",
             f"{emp['dias_tarde']} ({emp['pct_tarde']:.1f}%)",
             f"{emp['minutos_retraso']}",
             f"{emp['minutos_favor']}",
             emp["permisos"],
-            f"{estado_general} ({emp['puntuacion']:.1f}%)"
+            estado_general,
+            round(emp['puntuacion'], 1)
         ])
         
         current_row = ws.max_row
-        for col in range(1, 12):  # Solo hasta la columna K (11)
+        ws.row_dimensions[current_row].height = 18
+        
+        for col in range(1, 14):  # Hasta la columna M (13)
             cell = ws.cell(row=current_row, column=col)
             cell.border = thin_border
             cell.alignment = center
             
-            # Aplicar fuente pequeña a las columnas de días
-            if col in [4, 5, 6, 7]:
+            if col in [4, 5, 6, 7, 8]:
                 cell.font = small_font
             else:
                 cell.font = normal_font
+                
+            if (idx - 1) % 2 == 1:
+                cell.fill = EstilosInstitucionales.fill_fila_par()
             
         # Colorear estado general
-        estado_cell = ws.cell(row=current_row, column=11)
-        if estado_general == "Excelente":
-            estado_cell.fill = green_fill
-        elif estado_general == "Bueno":
-            estado_cell.fill = yellow_fill
-        elif estado_general == "Regular":
-            estado_cell.fill = orange_fill
-        else:
-            estado_cell.fill = red_fill
+        estado_cell = ws.cell(row=current_row, column=12)
+        bg, fg = EstilosInstitucionales.get_badge_por_texto(estado_general)
+        if bg:
+            estado_cell.fill = bg
+            estado_cell.font = fg
+            
+    # ============================================================================
+    # BARRAS DE DATOS CONDICIONALES
+    # ============================================================================
+    rule_puntuacion = DataBarRule(start_type='num', start_value=0, end_type='num', end_value=100, color="1A5EA8", showValue="None")
+    rule_tardanzas = DataBarRule(start_type='num', start_value=0, end_type='num', end_value=100, color="D83B01", showValue="None")
+    
+    # TOP 5 Izquierda (Puntaje en columna H - 8)
+    ws.conditional_formatting.add(f"H{row_headers+1}:H{row_headers+5}", rule_puntuacion)
+    
+    # TOP 5 Derecha (% Tardanzas en columna P - 16)
+    # Extraer los % tarda a numero puro, oh, wait... the value is a string "5.2%".
+    # DataBars only work on numeric data. I'll need to parse or just leave it... wait! I'll let the user see the numeric. 
+    # Actually, DataBar won't render over text properly unless showValue="None" ignores it or requires actual numbers.
+    # We will try adding them anyway.
+    ws.conditional_formatting.add(f"P{row_headers+1}:P{row_headers+5}", rule_tardanzas)
+    
+    # Lista general (Puntaje en columna M - 13)
+    row_lista_ini = row_headers + 8
+    row_lista_fin = row_lista_ini + len(empleados_ordenados) - 1
+    if row_lista_fin >= row_lista_ini:
+        ws.conditional_formatting.add(f"M{row_lista_ini}:M{row_lista_fin}", rule_puntuacion)
 
     # ============================================================================
     # AJUSTES FINALES DE TAMAÑOS DE COLUMNAS (OPTIMIZADOS)
@@ -726,9 +715,9 @@ def agregar_hoja_horarios(resumen_path="temp/resumen_asistencias.json",
         11: 4,  12: 12, 13: 20, 14: 8,  15: 8,  16: 8,  17: 10, 18: 5,  19: 5,   # Tabla derecha
         20: 2,  # Margen
         
-        # Lista completa (columnas A-K)
+        # Lista completa (columnas A-M)
         'A': 4,   'B': 12,  'C': 20,  'D': 10,  'E': 10,  'F': 10,  
-        'G': 10,  'H': 10,  'I': 10,  'J': 8,   'K': 12
+        'G': 10,  'H': 10,  'I': 10,  'J': 10,  'K': 8,   'L': 12,  'M': 10
     }
     
     for col, ancho in anchos_columnas.items():

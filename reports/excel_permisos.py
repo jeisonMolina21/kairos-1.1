@@ -244,25 +244,18 @@ def agregar_hoja_permisos(statistics_path="temp/statistics.json",
         # Agrupar empleados con permisos de este tipo
         empleados_tipo = {}
         
-        for _, permiso in df_tipo.iterrows():
+        for cedula, group in df_tipo.groupby("Cedula"):
             try:
-                cedula = permiso["Cedula"]
-                nombre = permiso.get("Nombre", "")
-                cargo = permiso.get("Cargo", "DOCENTE")
-                fecha_permiso = permiso["Fecha"].date()
+                nombre = group["Nombre"].iloc[0] if "Nombre" in group.columns else ""
+                cargo = group["Cargo"].iloc[0] if "Cargo" in group.columns else "DOCENTE"
                 
-                if cedula not in empleados_tipo:
-                    empleados_tipo[cedula] = {
-                        "nombre": nombre,
-                        "cargo": cargo,
-                        "dias_permiso": set()
-                    }
-                
-                # Agregar día de permiso
-                empleados_tipo[cedula]["dias_permiso"].add(fecha_permiso)
-                
+                empleados_tipo[cedula] = {
+                    "nombre": nombre,
+                    "cargo": cargo,
+                    "dias_permiso": set(group["Fecha"].dt.date)
+                }
             except Exception as e:
-                print(f"⚠️ Error procesando permiso: {e}")
+                print(f"⚠️ Error procesando empleado: {e}")
                 continue
 
         if not empleados_tipo:

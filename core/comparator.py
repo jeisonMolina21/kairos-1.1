@@ -206,6 +206,19 @@ def comparar_asistencias(
     try:
         with open(statistics_path, "r", encoding="utf-8") as f:
             stats = json.load(f)
+            
+            # PARCHE: Si la API devuelve un diccionario en vez de una lista
+            if isinstance(stats, dict):
+                # Extraemos la lista real si viene encapsulada en 'data' u otra llave
+                for key, value in stats.items():
+                    if isinstance(value, list):
+                        stats = value
+                        break
+                # Si sigue siendo un dict (error de api sin lista adentro)
+                if isinstance(stats, dict):
+                    print(f"❌ Error: La API devolvió un formato inesperado: {stats}")
+                    return []
+                    
     except FileNotFoundError:
         print("❌ No se encontró el archivo statistics.json.")
         return []
@@ -265,21 +278,24 @@ def comparar_asistencias(
     if 'tarjeta' in df.columns:
         tarjeta_col = 'tarjeta'
         mapeos_aplicados = 0
+        # Vectorized mapping for 'id' replacement based on 'tarjeta' and 'tiempo'
+        df['temp_fecha_str'] = df["tiempo"].dt.strftime("%Y-%m-%d").fillna("")
+        df['temp_tarjeta'] = df[tarjeta_col].fillna("").astype(str).str.strip()
         
-        for idx, row in df.iterrows():
-            tarjeta_val = str(row[tarjeta_col]).strip() if pd.notna(row[tarjeta_col]) else ""
-            fecha_val = row["tiempo"].strftime("%Y-%m-%d") if pd.notna(row["tiempo"]) else ""
+        # Preparar un diccionario de mapeo plano
+        mapping_dict = {k: v['number_id'] for k, v in carnet_por_fecha_map.items()}
+        
+        # Crear la clave temporal y mapear
+        df['temp_key'] = list(zip(df['temp_tarjeta'], df['temp_fecha_str']))
+        df['nuevo_id'] = df['temp_key'].map(mapping_dict)
+        
+        mask = df['nuevo_id'].notna() & (df['nuevo_id'] != df['id'])
+        mapeos_aplicados = mask.sum()
+        
+        if mapeos_aplicados > 0:
+            df.loc[mask, 'id'] = df.loc[mask, 'nuevo_id']
             
-            if tarjeta_val and fecha_val:
-                clave = (tarjeta_val, fecha_val)
-                if clave in carnet_por_fecha_map:
-                    mapeo_info = carnet_por_fecha_map[clave]
-                    nuevo_id = mapeo_info['number_id']
-                    antiguo_id = df.at[idx, "id"]
-                    
-                    if nuevo_id != antiguo_id:
-                        df.at[idx, "id"] = nuevo_id
-                        mapeos_aplicados += 1
+        df.drop(columns=['temp_fecha_str', 'temp_tarjeta', 'temp_key', 'nuevo_id'], inplace=True)
 
         print(f"✅ Mapeos de carnets aplicados: {mapeos_aplicados}")
 

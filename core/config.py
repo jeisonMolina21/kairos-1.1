@@ -6,7 +6,10 @@ import os
 from dataclasses import dataclass
 from typing import Dict, List
 from pathlib import Path
+from dotenv import load_dotenv
 
+# Cargar variables de entorno desde .env
+load_dotenv(Path(__file__).parent.parent / '.env')
 
 # =============================================================================
 # CONFIGURACIÓN DE RUTAS Y DIRECTORIOS
@@ -49,15 +52,15 @@ class PathConfig:
 class APIConfig:
     """Configuración de conexión a API"""
     # URLs de la API (primaria y secundaria para fallback)
-    PRIMARY_URL: str = "https://api.rh360.unihorizonte.edu.co/api"
-    SECONDARY_URL: str = "http://10.0.1.14:5000/api"
+    PRIMARY_URL: str = os.getenv("API_PRIMARY_URL", "https://api.rh360.unihorizonte.edu.co/api")
+    SECONDARY_URL: str = os.getenv("API_SECONDARY_URL", "http://10.0.1.14:5000/api")
     
-    # Credenciales (se deben leer desde variables de entorno en producción)
+    # Credenciales
     EMAIL: str = os.getenv("API_EMAIL", "admin@admin.com")
     PASSWORD: str = os.getenv("API_PASSWORD", "Admin3811")
     
     # Configuración de conexión
-    TIMEOUT: int = 60  # segundos
+    TIMEOUT: int = int(os.getenv("API_TIMEOUT", "60"))  # segundos
     MAX_RETRIES: int = 6
     RETRY_DELAY: int = 5  # segundos
     
@@ -92,6 +95,9 @@ class WorkScheduleConfig:
     
     # Días mínimos para análisis de puntualidad
     DIAS_MINIMOS_ANALISIS: int = 5
+    
+    # Hora inicio recargo nocturno (en formato decimal, ej: 19.0 para 19:00 o 7 PM)
+    HORA_INICIO_RECARGO_NOCTURNO: float = 19.0
 
 
 # =============================================================================

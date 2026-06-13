@@ -12,66 +12,11 @@ import os
 current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, current_dir)
 
-# Importación robusta de EstilosModernos
+# Importación robusta de EstilosInstitucionales
 try:
-    from reports.styles import EstilosModernos
-    print("✅ EstilosModernos importado correctamente desde reports.styles")
+    from reports.styles import EstilosInstitucionales
 except ImportError as e:
-    print(f"⚠️ No se pudo importar EstilosModernos: {e}")
-    # Clase de respaldo
-    class EstilosModernos:
-        AZUL_PRINCIPAL = "0054A6"
-        VERDE_SUTIL = "C6E0B4"
-        AMARILLO_SUTIL = "FFE699"
-        ROJO_SUTIL = "F8CBAD"
-        EMERGENCIA = "E9D502"
-        
-        @staticmethod
-        def fill_encabezado_principal():
-            return PatternFill(start_color=EstilosModernos.AZUL_PRINCIPAL, 
-                              end_color=EstilosModernos.AZUL_PRINCIPAL, 
-                              fill_type="solid")
-        
-        @staticmethod
-        def fuente_encabezado():
-            return Font(bold=True, size=11, color="FFFFFF", name='Arial')
-        
-        @staticmethod
-        def fill_verde_sutil():
-            return PatternFill(start_color=EstilosModernos.VERDE_SUTIL, 
-                              end_color=EstilosModernos.VERDE_SUTIL, 
-                              fill_type="solid")
-        
-        @staticmethod
-        def fill_amarillo_sutil():
-            return PatternFill(start_color=EstilosModernos.AMARILLO_SUTIL, 
-                              end_color=EstilosModernos.AMARILLO_SUTIL, 
-                              fill_type="solid")
-        
-        @staticmethod
-        def fill_rojo_sutil():
-            return PatternFill(start_color=EstilosModernos.ROJO_SUTIL, 
-                              end_color=EstilosModernos.ROJO_SUTIL, 
-                              fill_type="solid")
-        
-        @staticmethod
-        def fill_emergencia():
-            return PatternFill(start_color=EstilosModernos.EMERGENCIA, 
-                              end_color=EstilosModernos.EMERGENCIA, 
-                              fill_type="solid")
-        
-        @staticmethod
-        def borde_sutil():
-            return Border(
-                left=Side(style='thin', color="E1DFDD"),
-                right=Side(style='thin', color="E1DFDD"),
-                top=Side(style='thin', color="E1DFDD"),
-                bottom=Side(style='thin', color="E1DFDD")
-            )
-        
-        @staticmethod
-        def alineacion_centro():
-            return Alignment(horizontal="center", vertical="center", wrap_text=True)
+    print(f"⚠️ No se pudo importar EstilosInstitucionales: {e}")
 
 # Función para obtener nombre del día en español
 def obtener_nombre_dia(fecha_str):
@@ -261,19 +206,40 @@ def agregar_hoja_diario(resumen_path="temp/resumen_asistencias.json",
 
     print(f"⚠️  Novedades detectadas en API: {len(mapeo_novedades)} registros")
 
-    # Estilos modernos
-    header_fill = EstilosModernos.fill_encabezado_principal()
-    green_fill = EstilosModernos.fill_verde_sutil()
-    yellow_fill = EstilosModernos.fill_amarillo_sutil()
-    red_fill = EstilosModernos.fill_rojo_sutil()
-    blue_fill = PatternFill(start_color="87CEEB", end_color="87CEEB", fill_type="solid")
-    domingo_fill = PatternFill(start_color="E6E6FA", end_color="E6E6FA", fill_type="solid")
-    emergencia_fill = EstilosModernos.fill_emergencia()
-    novedad_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+    # Estilos institucionales
+    header_col_fill = EstilosInstitucionales.fill_azul_medio()
+    bold_white_font = EstilosInstitucionales.fuente_encabezado_columna()
+    borde_blanco_inf = EstilosInstitucionales.borde_inferior_blanco()
+    center = EstilosInstitucionales.alineacion_centro()
 
-    bold_white_font = EstilosModernos.fuente_encabezado()
-    thin_border = EstilosModernos.borde_sutil()
-    center = EstilosModernos.alineacion_centro()
+    # Agregar encabezado superior
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=12)
+    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=12)
+    ws.merge_cells(start_row=3, start_column=1, end_row=3, end_column=12)
+    
+    ws.row_dimensions[1].height = 30
+    ws.row_dimensions[2].height = 20
+    ws.row_dimensions[3].height = 20
+    
+    cell_titulo = ws.cell(row=1, column=1, value="REPORTE DIARIO DE ASISTENCIA")
+    cell_titulo.fill = EstilosInstitucionales.fill_azul_principal()
+    cell_titulo.font = EstilosInstitucionales.fuente_titulo_principal()
+    cell_titulo.alignment = center
+    
+    cell_periodo = ws.cell(row=2, column=1, value="Período Analizado")
+    cell_periodo.fill = EstilosInstitucionales.fill_azul_principal()
+    cell_periodo.font = EstilosInstitucionales.fuente_periodo()
+    cell_periodo.alignment = center
+    
+    cell_meta = ws.cell(row=3, column=1, value="Generado por Kairos FAS")
+    cell_meta.fill = EstilosInstitucionales.fill_azul_principal()
+    cell_meta.font = EstilosInstitucionales.fuente_metadatos()
+    cell_meta.alignment = center
+    
+    for r in range(1, 4):
+        for c in range(2, 13):
+            cell = ws.cell(row=r, column=c)
+            cell.fill = EstilosInstitucionales.fill_azul_principal()
 
     # 🆕 MODIFICACIÓN: Encabezados con nueva columna "Día"
     headers = [
@@ -283,13 +249,13 @@ def agregar_hoja_diario(resumen_path="temp/resumen_asistencias.json",
     ]
     ws.append(headers)
 
-    # Aplicar estilos a encabezados
+    # Aplicar estilos a encabezados de tabla (Fila 4)
     for col_num, header in enumerate(headers, 1):
-        cell = ws.cell(row=1, column=col_num)
-        cell.fill = header_fill
+        cell = ws.cell(row=4, column=col_num)
+        cell.fill = header_col_fill
         cell.font = bold_white_font
         cell.alignment = center
-        cell.border = thin_border
+        cell.border = borde_blanco_inf
 
     # MODIFICACIÓN: Función para calcular horas entre dos tiempos (MEJORADA)
     def calcular_horas_entre(hora1, hora2):
@@ -367,8 +333,8 @@ def agregar_hoja_diario(resumen_path="temp/resumen_asistencias.json",
             return "error"
 
     # Función: Generar observación mejorada que incluye permisos, campañas y SALIDAS INSTITUCIONALES
-    def generar_observacion_mejorada(punt_entrada, punt_salida, es_domingo=False, info_permisos=None, registro_resumen=None):
-        """Genera observación mejorada que incluye información de permisos, campañas y SALIDAS INSTITUCIONALES (SIN FESTIVOS)"""
+    def generar_observacion_mejorada(punt_entrada, punt_salida, es_domingo=False, info_permisos=None, registro_resumen=None, es_festivo=False):
+        """Genera observación mejorada que incluye información de permisos, campañas, SALIDAS INSTITUCIONALES y Festivos"""
         
         # Priorizar información del registro_resumen (viene del comparator)
         if registro_resumen:
@@ -414,7 +380,11 @@ def agregar_hoja_diario(resumen_path="temp/resumen_asistencias.json",
             elif tipo_evento == "Salida Institucional":  # NUEVO: Salida Institucional
                 return "Salida Institucional"
         
-        # Lógica existente para otros casos (SIN FESTIVOS)
+        # Manejar festivos primero
+        if es_festivo:
+            return "Festivo"
+            
+        # Lógica existente para otros casos
         if es_domingo:
             return "Día dominical"
         
@@ -455,20 +425,19 @@ def agregar_hoja_diario(resumen_path="temp/resumen_asistencias.json",
             # 🆕 MODIFICACIÓN: Obtener nombre del día
             nombre_dia = obtener_nombre_dia(fecha_str) if fecha_str and fecha_str != "N/A" else "N/A"
             
-            # EXCLUIR FESTIVOS - Verificar si es festivo
+            # Verificar si es festivo
+            es_festivo = False
             if fecha_str and fecha_str != "N/A":
                 try:
                     fecha = datetime.strptime(fecha_str, "%Y-%m-%d").date()
                     es_festivo, _ = es_dia_festivo_simple(fecha)
-                    if es_festivo:
-                        continue  # Saltar festivos
                 except:
                     pass
 
             # Obtener vista previa del permiso del registro
             vista_previa_permiso = registro.get("Vista_Previa_Permiso") or registro.get("vista_previa_permiso") or "N/A"
             
-            # Verificar si es domingo (pero NO festivo, ya que los festivos se excluyeron arriba)
+            # Verificar si es domingo
             es_domingo = False
             if fecha_str and fecha_str != "N/A":
                 try:
@@ -540,7 +509,8 @@ def agregar_hoja_diario(resumen_path="temp/resumen_asistencias.json",
                 punt_salida, 
                 es_domingo, 
                 info_permisos_dia,
-                registro
+                registro,
+                es_festivo=es_festivo
             )
 
             # AGREGAR INFORMACIÓN DE NOVEDAD A LAS OBSERVACIONES
@@ -577,69 +547,37 @@ def agregar_hoja_diario(resumen_path="temp/resumen_asistencias.json",
             row_idx = ws.max_row
             registros_procesados += 1
 
-            # Aplicar estilos y colores condicionales
+            # Aplicar estilos y colores condicionales (ESTILOS INSTITUCIONALES)
+            is_even = (row_idx - 4) % 2 == 1
+            ws.row_dimensions[row_idx].height = 18
+            
             for col_idx in range(1, len(headers) + 1):
                 cell = ws.cell(row=row_idx, column=col_idx)
                 cell.alignment = center
-                cell.border = thin_border
+                cell.border = EstilosInstitucionales.borde_horizontal_sutil()
+                cell.font = EstilosInstitucionales.fuente_normal()
+                if is_even:
+                    cell.fill = EstilosInstitucionales.fill_fila_par()
 
-            # COLOREAR EN AMARILLO SI HAY NOVEDAD EN LA API
-            if tiene_novedad_api:
-                for col_idx in range(1, len(headers) + 1):
-                    ws.cell(row=row_idx, column=col_idx).fill = novedad_fill
-                print(f"🎨 Fila {row_idx} coloreada por novedad: {cedula} - {fecha_str}")
+            # Horas Trabajadas (Col 7)
+            cell_horas = ws.cell(row=row_idx, column=7)
+            if horas_trabajadas_str == "00:00:00":
+                cell_horas.fill = PatternFill(start_color=EstilosInstitucionales.BADGE_CRITICO_BG, end_color=EstilosInstitucionales.BADGE_CRITICO_BG, fill_type="solid")
+                cell_horas.font = EstilosInstitucionales.fuente_normal() # Mantenemos texto normal pero fondo rojo suave
+            
+            # Vista Previa Permiso (Col 11) - Enlace
+            cell_permiso = ws.cell(row=row_idx, column=11)
+            if vista_previa_permiso and str(vista_previa_permiso).startswith("http"):
+                cell_permiso.value = "Ver documento"
+                cell_permiso.hyperlink = vista_previa_permiso
+                cell_permiso.font = Font(color=EstilosInstitucionales.AZUL_PRINCIPAL, underline="single", name=EstilosInstitucionales.FONT_NAME, size=10)
 
-            # Colorear según novedad de orden público (prioridad más alta)
-            if observaciones == "NOVEDAD ORDEN PUBLICO":
-                for col_idx in range(1, len(headers) + 1):
-                    ws.cell(row=row_idx, column=col_idx).fill = emergencia_fill
-
-            # Colorear según puntualidad en ingreso
-            if entrada not in ["N/A"] and ingreso_asignado != "N/A":
-                if punt_entrada == "temprano":
-                    ws.cell(row=row_idx, column=5).fill = green_fill  # Columna 5 ahora es Hora Ingreso
-                elif punt_entrada == "a_tiempo":
-                    ws.cell(row=row_idx, column=5).fill = yellow_fill
-                elif punt_entrada == "tarde":
-                    ws.cell(row=row_idx, column=5).fill = red_fill
-
-            # Colorear según puntualidad en salida
-            if salida not in ["N/A"] and salida_asignada != "N/A":
-                if punt_salida == "temprano":
-                    ws.cell(row=row_idx, column=6).fill = red_fill  # Columna 6 ahora es Hora Salida
-                elif punt_salida == "a_tiempo":
-                    ws.cell(row=row_idx, column=6).fill = yellow_fill
-                elif punt_salida == "tarde":
-                    ws.cell(row=row_idx, column=6).fill = green_fill
-
-            # Colorear horas trabajadas según cantidad
-            cell_horas = ws.cell(row=row_idx, column=7)  # Columna 7 ahora es Horas Trabajadas
-            if horas_trabajadas_decimal >= 8:
-                cell_horas.fill = green_fill
-            elif horas_trabajadas_decimal >= 6:
-                cell_horas.fill = yellow_fill
-            else:
-                cell_horas.fill = red_fill
-
-            # Colorear celdas de domingo (pero NO festivos)
-            if es_domingo:
-                # Ajustar índices de columnas por la nueva columna "Día"
-                for col in [3, 4, 5, 6, 7, 8, 9, 10, 11, 12]:  # Desde Fecha hasta Observaciones
-                    ws.cell(row=row_idx, column=col).fill = domingo_fill
-
-            # Colorear observaciones según tipo (SIN FESTIVOS)
-            cell_obs = ws.cell(row=row_idx, column=12)  # Columna 12 ahora es Observaciones
-            observaciones_lower = observaciones.lower()
-            if "novedad orden publico" in observaciones_lower:
-                cell_obs.fill = emergencia_fill
-            elif "permiso" in observaciones_lower or "campaña" in observaciones_lower or "salida institucional" in observaciones_lower:
-                cell_obs.fill = blue_fill
-            elif "dominical" in observaciones_lower:
-                cell_obs.fill = domingo_fill
-            elif "tarde" in observaciones_lower or "antes" in observaciones_lower:
-                cell_obs.fill = red_fill
-            elif "cumplió" in observaciones_lower or "completas" in observaciones_lower or "novedad" in observaciones_lower:
-                cell_obs.fill = green_fill
+            # Observaciones (Col 12) - Badges
+            cell_obs = ws.cell(row=row_idx, column=12)
+            bg, fg = EstilosInstitucionales.get_badge_por_texto(observaciones)
+            if bg and fg:
+                cell_obs.fill = bg
+                cell_obs.font = fg
 
         except Exception as e:
             print(f"❌ Error procesando registro en hoja Diario: {e}")
@@ -654,9 +592,12 @@ def agregar_hoja_diario(resumen_path="temp/resumen_asistencias.json",
         ws.column_dimensions[col].width = ancho
 
     # Agregar filtros automáticos en TODAS las columnas
-    last_row = len(resumen) + 1
+    last_row = ws.max_row
     last_col = len(headers)
-    ws.auto_filter.ref = f"A1:{get_column_letter(last_col)}{last_row}"
+    ws.auto_filter.ref = f"A4:{get_column_letter(last_col)}{last_row}"
+
+    # Congelar fila de encabezados
+    ws.freeze_panes = "A5"
 
     # Guardar
     wb.save(salida_excel)

@@ -8,35 +8,9 @@ from openpyxl.utils import get_column_letter
 import requests
 
 try:
-    from reports.styles import EstilosModernos
+    from reports.styles import EstilosInstitucionales
 except ImportError:
-    class EstilosModernos:
-        @staticmethod
-        def fill_encabezado_principal():
-            return PatternFill(start_color="0054A6", end_color="0054A6", fill_type="solid")
-        @staticmethod
-        def fuente_encabezado():
-            return Font(bold=True, size=11, color="FFFFFF", name='Arial')
-        @staticmethod
-        def fill_verde_sutil():
-            return PatternFill(start_color="C6E0B4", end_color="C6E0B4", fill_type="solid")
-        @staticmethod
-        def fill_amarillo_sutil():
-            return PatternFill(start_color="FFE699", end_color="FFE699", fill_type="solid")
-        @staticmethod
-        def fill_rojo_sutil():
-            return PatternFill(start_color="F8CBAD", end_color="F8CBAD", fill_type="solid")
-        @staticmethod
-        def borde_sutil():
-            return Border(
-                left=Side(style='thin', color="E1DFDD"),
-                right=Side(style='thin', color="E1DFDD"),
-                top=Side(style='thin', color="E1DFDD"),
-                bottom=Side(style='thin', color="E1DFDD")
-            )
-        @staticmethod
-        def alineacion_centro():
-            return Alignment(horizontal="center", vertical="center", wrap_text=True)
+    pass
 
 def obtener_festivos(año):
     """Obtiene los días festivos para Colombia del año específico"""
@@ -194,17 +168,24 @@ def generar_excel_resumen_semanal(resumen_path="temp/resumen_asistencias.json",
     ws = wb.active
     ws.title = "Resumen Semanal"
 
-    # Estilos
-    header_fill = EstilosModernos.fill_encabezado_principal()
-    header_font = EstilosModernos.fuente_encabezado()
-    center = EstilosModernos.alineacion_centro()
-    border = EstilosModernos.borde_sutil()
+    # Estilos Institucionales
+    header_fill = EstilosInstitucionales.fill_azul_principal()
+    header_font = EstilosInstitucionales.fuente_encabezado_columna()
+    center = EstilosInstitucionales.alineacion_centro()
+    border = EstilosInstitucionales.borde_inferior_blanco()
+    thin_border = EstilosInstitucionales.borde_horizontal_sutil()
     
-    green_fill = EstilosModernos.fill_verde_sutil()
-    yellow_fill = EstilosModernos.fill_amarillo_sutil()
-    blue_fill = PatternFill(start_color="87CEEB", end_color="87CEEB", fill_type="solid")
-    red_fill = EstilosModernos.fill_rojo_sutil()
-    festivo_fill = PatternFill(start_color="FFD700", end_color="FFD700", fill_type="solid")
+    col_header_fill = EstilosInstitucionales.fill_azul_medio()
+    normal_font = EstilosInstitucionales.fuente_normal()
+    
+    fill_total_oscuro = PatternFill(start_color="102A43", end_color="102A43", fill_type="solid")
+    font_total = Font(bold=True, size=10, color="FFFFFF", name=EstilosInstitucionales.FONT_NAME)
+    
+    green_fill = PatternFill(start_color="C6E0B4", end_color="C6E0B4", fill_type="solid")
+    yellow_fill = PatternFill(start_color="FFE699", end_color="FFE699", fill_type="solid")
+    red_fill = PatternFill(start_color="F8CBAD", end_color="F8CBAD", fill_type="solid")
+    blue_fill = PatternFill(start_color="D6E4FF", end_color="D6E4FF", fill_type="solid")
+    festivo_fill = PatternFill(start_color="FFF3CD", end_color="FFF3CD", fill_type="solid")
 
     # Crear mapeo de cargos desde statistics
     mapeo_cargos = {}
@@ -310,15 +291,15 @@ def generar_excel_resumen_semanal(resumen_path="temp/resumen_asistencias.json",
             fecha_dia = inicio + timedelta(days=j)
             dia_con_fecha = f"{dias_semana[j]} {fecha_dia.strftime('%d/%m')}"
             cell = ws.cell(row=2, column=current_col + j, value=dia_con_fecha)
-            cell.fill = header_fill
+            cell.fill = col_header_fill
             cell.font = header_font
             cell.alignment = center
             cell.border = border
 
         # Columna "Total" de la semana
         cell = ws.cell(row=2, column=current_col + 6, value="Total")
-        cell.fill = header_fill
-        cell.font = header_font
+        cell.fill = fill_total_oscuro
+        cell.font = font_total
         cell.alignment = center
         cell.border = border
 
@@ -334,6 +315,21 @@ def generar_excel_resumen_semanal(resumen_path="temp/resumen_asistencias.json",
     cell.border = border
 
     cell = ws.cell(row=2, column=col_permisos_inicio, value="Permisos")
+    cell.fill = header_fill
+    cell.font = header_font
+    cell.alignment = center
+    cell.border = border
+
+    # Agregar columna "Total Recargo Nocturno"
+    col_recargo_inicio = current_col + 1
+    ws.merge_cells(start_row=1, start_column=col_recargo_inicio, end_row=1, end_column=col_recargo_inicio)
+    cell = ws.cell(row=1, column=col_recargo_inicio, value="Total Recargo Nocturno")
+    cell.fill = header_fill
+    cell.font = header_font
+    cell.alignment = center
+    cell.border = border
+
+    cell = ws.cell(row=2, column=col_recargo_inicio, value="Horas Nocturnas")
     cell.fill = header_fill
     cell.font = header_font
     cell.alignment = center
@@ -413,11 +409,33 @@ def generar_excel_resumen_semanal(resumen_path="temp/resumen_asistencias.json",
             total_permisos = info["total_permisos"]
             
             # Escribir información básica del empleado
-            ws.cell(row=fila_actual, column=1, value=cedula).border = border
-            ws.cell(row=fila_actual, column=2, value=empleado).border = border
-            ws.cell(row=fila_actual, column=3, value=cargo).border = border
+            ws.row_dimensions[fila_actual].height = 18
+            for c in range(1, 4):
+                cell = ws.cell(row=fila_actual, column=c)
+                cell.border = thin_border
+                cell.font = normal_font
+                cell.alignment = center
+                if (fila_actual % 2 == 1):
+                    cell.fill = EstilosInstitucionales.fill_fila_par()
+
+            ws.cell(row=fila_actual, column=1, value=cedula)
+            ws.cell(row=fila_actual, column=2, value=empleado)
+            ws.cell(row=fila_actual, column=3, value=cargo)
 
             current_col = 4
+            recargo_nocturno_total_empleado = 0.0
+            
+            # O(1) Lookup: Convertir data_emp a un diccionario indexado por fecha
+            # Extraer columnas relevantes de data_emp. Asumimos la primera fila por día.
+            # Convertimos la columna Fecha a date para la clave
+            registros_por_dia = {}
+            for _, row in data_emp.iterrows():
+                try:
+                    fecha_val = row["Fecha"].date() if pd.notna(row["Fecha"]) else None
+                    if fecha_val and fecha_val not in registros_por_dia:
+                        registros_por_dia[fecha_val] = row.to_dict()
+                except Exception:
+                    pass
             
             # Procesar cada semana
             for inicio, fin in semanas_con_registros:
@@ -425,11 +443,12 @@ def generar_excel_resumen_semanal(resumen_path="temp/resumen_asistencias.json",
                 
                 for j in range(6):  # Lunes a Sábado
                     fecha_dia = inicio + timedelta(days=j)
+                    fecha_dia_date = fecha_dia.date()
                     
-                    es_festivo = fecha_dia.date() in festivos
+                    es_festivo = fecha_dia_date in festivos
                     
-                    # Filtrar registros del día
-                    registros_dia = data_emp[data_emp["Fecha"].dt.date == fecha_dia.date()]
+                    # Filtrado O(1) del día
+                    registro = registros_por_dia.get(fecha_dia_date)
                     
                     valor = ""
                     fill_color = None
@@ -440,8 +459,8 @@ def generar_excel_resumen_semanal(resumen_path="temp/resumen_asistencias.json",
                         valor = f"{int(horas_festivo)}:{int((horas_festivo%1)*60):02d}:00 / Festivo"
                         fill_color = festivo_fill
                         horas_semana += horas_festivo
-                    elif not registros_dia.empty:
-                        registro = registros_dia.iloc[0]
+                    elif registro:
+                        # registro ya es un dict de los datos de la fila
                         horas = obtener_horas_trabajadas(registro)
                         
                         # Obtener tipo de evento
@@ -452,6 +471,25 @@ def generar_excel_resumen_semanal(resumen_path="temp/resumen_asistencias.json",
                                 break
                         
                         horas_semana += horas
+                        
+                        # CALCULAR RECARGO NOCTURNO
+                        from core.config import work_schedule
+                        umbral_nocturno = work_schedule.HORA_INICIO_RECARGO_NOCTURNO
+                        
+                        for col_name in ['Hora_Salida', 'Hora Salida', 'hora_salida']:
+                            if col_name in registro:
+                                hora_salida_str = registro[col_name]
+                                if isinstance(hora_salida_str, str) and ":" in hora_salida_str:
+                                    try:
+                                        partes = hora_salida_str.split(":")
+                                        h_salida = int(partes[0])
+                                        m_salida = int(partes[1]) if len(partes) > 1 else 0
+                                        salida_decimal = h_salida + (m_salida / 60.0)
+                                        if salida_decimal > umbral_nocturno:
+                                            recargo_nocturno_total_empleado += (salida_decimal - umbral_nocturno)
+                                    except:
+                                        pass
+                                break
                         
                         # MODIFICACIÓN PRINCIPAL: Mostrar tipo específico de permiso
                         if tipo_evento in ["Permiso", "Campaña", "Salida Institucional"] and horas > 0:
@@ -494,16 +532,30 @@ def generar_excel_resumen_semanal(resumen_path="temp/resumen_asistencias.json",
                     # Escribir celda
                     cell = ws.cell(row=fila_actual, column=current_col + j, value=valor)
                     cell.alignment = center
-                    cell.border = border
-                    if fill_color:
+                    cell.border = thin_border
+                    cell.font = normal_font
+                    
+                    if (fila_actual % 2 == 1):
+                        cell.fill = EstilosInstitucionales.fill_fila_par()
+                        
+                    # Validar si tiene badge específico por texto (Permisos, etc)
+                    bg, fg = EstilosInstitucionales.get_badge_por_texto(str(valor))
+                    if bg:
+                        cell.fill = bg
+                        cell.font = fg
+                    elif fill_color: # Retención de lógica para verde, amarillo, etc
                         cell.fill = fill_color
 
                 # Celda de total de la semana
                 total_cell = ws.cell(row=fila_actual, column=current_col + 6, 
                                    value=f"{int(horas_semana)}:{int((horas_semana%1)*60):02d}:00")
                 total_cell.alignment = center
-                total_cell.border = border
-                total_cell.font = Font(bold=True)
+                total_cell.border = thin_border
+                total_cell.font = Font(bold=True, name=EstilosInstitucionales.FONT_NAME)
+                
+                if (fila_actual % 2 == 1):
+                    total_cell.fill = EstilosInstitucionales.fill_fila_par()
+
                 if horas_semana >= 40:
                     total_cell.fill = green_fill
                 elif horas_semana >= 30:
@@ -516,10 +568,21 @@ def generar_excel_resumen_semanal(resumen_path="temp/resumen_asistencias.json",
             # Celda de total de permisos
             permisos_cell = ws.cell(row=fila_actual, column=col_permisos_inicio, value=total_permisos)
             permisos_cell.alignment = center
-            permisos_cell.border = border
-            permisos_cell.font = Font(bold=True)
-            if total_permisos > 0:
-                permisos_cell.fill = blue_fill
+            permisos_cell.border = thin_border
+            permisos_cell.font = normal_font
+            if (fila_actual % 2 == 1):
+                permisos_cell.fill = EstilosInstitucionales.fill_fila_par()
+
+            # Celda de total recargo nocturno
+            horas_recargo = int(recargo_nocturno_total_empleado)
+            minutos_recargo = int((recargo_nocturno_total_empleado % 1) * 60)
+            recargo_valor = f"{horas_recargo}:{minutos_recargo:02d}:00" if recargo_nocturno_total_empleado > 0 else "0:00:00"
+            recargo_cell = ws.cell(row=fila_actual, column=col_recargo_inicio, value=recargo_valor)
+            recargo_cell.alignment = center
+            recargo_cell.border = thin_border
+            recargo_cell.font = normal_font
+            if (fila_actual % 2 == 1):
+                recargo_cell.fill = EstilosInstitucionales.fill_fila_par()
 
             fila_actual += 1
 
@@ -533,14 +596,15 @@ def generar_excel_resumen_semanal(resumen_path="temp/resumen_asistencias.json",
         ws.column_dimensions["B"].width = 30
         ws.column_dimensions["C"].width = 25
         for col in range(4, current_col + 1):
-            ws.column_dimensions[get_column_letter(col)].width = 15
+            ws.column_dimensions[get_column_letter(col)].width = 22
         ws.column_dimensions[get_column_letter(col_permisos_inicio)].width = 12
+        ws.column_dimensions[get_column_letter(col_recargo_inicio)].width = 15
 
         # Agregar filtros automáticos
         ws.auto_filter.ref = f"A1:{get_column_letter(3)}{fila_actual-1}"
 
-        # Congelar paneles
-        ws.freeze_panes = "A3"
+        # Congelar paneles: Columnas 1-3 y filas 1-2. Intersección es D3.
+        ws.freeze_panes = "D3"
 
     except Exception as e:
         print(f"⚠️ Error ajustando formato: {e}")
